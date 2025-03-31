@@ -1,0 +1,52 @@
+﻿@page "/videogames"
+@inject HttpClient HttpClient
+@inject ISnackbar Snackbar
+
+@using MyGamingList.Application.Services.VideoGames.Dtos
+
+<PageTitle>Video Games</PageTitle>
+
+@if (_videoGames is not null) {
+    <MudCard>
+        <MudCardHeader>
+            <MudText Typo="Typo.h3">Video Games</MudText>
+        </MudCardHeader>
+        <MudDivider/>
+        <MudCardContent>
+            <MudTable Items="_videoGames" Bordered="true" Hover="true" Striped="true" Dense="true">
+                <HeaderContent>
+                    <MudTh>Id</MudTh>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Release Date</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.VideoGameId</MudTd>
+                    <MudTd>@context.Name</MudTd>
+                    <MudTd>@context.ReleaseDate</MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Typo="Typo.subtitle2">No Content Found</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudCardContent>
+    </MudCard>
+} else {
+    <MudStack Class="mt-5" Row="true" Justify="Justify.Center">
+        <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true"/>
+    </MudStack>
+}
+
+@code {
+    private List<VideoGameDto>? _videoGames;
+
+    protected override async Task OnInitializedAsync() {
+        try {
+            _videoGames = await HttpClient.GetFromJsonAsync<List<VideoGameDto>>("http://localhost:5063/api/v1/VideoGame");
+        } catch (Exception ex) {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+
+        _videoGames ??= [];
+    }
+
+}

@@ -3,11 +3,7 @@ using MyGamingList.Infrastructure;
 using Scalar.AspNetCore;
 using Serilog;
 
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Debug()
-    .WriteTo.Console()
-    .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
-    .CreateLogger();
+Log.Logger = new LoggerConfiguration().MinimumLevel.Debug().WriteTo.Console().WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day).CreateLogger();
 
 try {
     Log.Information("Starting API");
@@ -21,10 +17,19 @@ try {
 
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddScoped(typeof(CancellationToken),
-        serviceProvider => {
-            IHttpContextAccessor httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
-            return httpContextAccessor.HttpContext?.RequestAborted ?? CancellationToken.None;
-        });
+    implementationFactory: serviceProvider => {
+        IHttpContextAccessor httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
+        return httpContextAccessor.HttpContext?.RequestAborted ?? CancellationToken.None;
+    });
+
+    builder.Services.AddCors(options => {
+        options.AddPolicy("AllowAll",
+            policyBuilder => {
+                policyBuilder.AllowAnyOrigin();
+                policyBuilder.AllowAnyHeader();
+                policyBuilder.AllowAnyMethod();
+            });
+    });
 
     WebApplication app = builder.Build();
 
@@ -36,6 +41,7 @@ try {
             options.Layout = ScalarLayout.Modern;
             options.HideClientButton = true;
         });
+        app.UseCors("AllowAll");
     }
 
     app.UseHttpsRedirection();
